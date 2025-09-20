@@ -19,11 +19,10 @@ BEM VINDO A BIBLIOTECA:
 5 - Sair
 ''')
 
-'''
-def listar_livros(bib):
-    lista = bib.listar_livros()
-    return lista
-'''
+# TODO: implementar a função para listar livros disponíveis
+# TODO: criar tratamento de erro para conexões com o banco
+# TODO: adicionar logs em vez de apenas prints
+
 
 def listar_livros():
     try:
