@@ -1,8 +1,11 @@
 from livro import Livro
 from usuario import Usuario
 from biblioteca import Biblioteca
+from database import get_session, Usuario, Livro
 
 bib = Biblioteca()
+
+session = next(get_session())
 
 def msg_inicial():
     print('''
@@ -16,33 +19,68 @@ BEM VINDO A BIBLIOTECA:
 5 - Sair
 ''')
 
+'''
 def listar_livros(bib):
     lista = bib.listar_livros()
     return lista
+'''
 
-def pegar_livro(bib):
-    listar_livros()
+def listar_livros():
+    try:
+        livros = session.query(Livro).all
+        if not livros:
+            print("📚 Não existe livros disponiveis.")
+            
+        else:
+            print("📚 Livros disponiveis:")
+            for livro in livros:
+                print(f"{livro.titulo} || {livro.autor} || {livro.ano}")
+        
+    finally:
+        session.close()
 
-def cadastrar_novo_usuario(bib):
-    nome = input("\nPor favor digite o nome do usuario: ")
-    contato =input("\nPor favor digite o seu email (exemplo: email@email.com): ")
+def cadastrar_novo_usuario():
+    name = input("\nPor favor digite o nome do usuario: ")
+    email =input("\nPor favor digite o seu email (exemplo: email@email.com): ")
 
-    novo_usuario = Usuario(nome, contato)
+    try:
+        novo_usuario = Usuario(
+            nome=name,
+            contato=email
+        )
 
-    msg = bib.cadastrar_usuario(novo_usuario)
-
-    return msg
+        session.add(novo_usuario)
+        session.commit()
+        print(f"✅ Usuario {name} foi criado com sucesso!!")
+    except Exception as e:
+        session.rollback()
+        print("Erro ao Registrar:", e)
     
-def adicionar_novo_livro(bib):
+    finally:
+        session.close()
+
+def adicionar_novo_livro():
     titulo = input("\nDigite o titulo: ")
     autor = input("\nDigite o nome do autor: ")
     ano = int(input("\nDigite o ano do livro: "))
 
-    novo_livro = Livro(titulo, autor, ano)
+    try:
+        novo_livro = Livro(
+            titulo=titulo,
+            ano=ano, 
+            autor=autor
+        )
+        session.add(novo_livro)
+        session.commit()
 
-    msg = bib.adicionar_livros(novo_livro)
+        print(f"✅ O livro {titulo} foi adicionado com sucesso")
 
-    return msg
+    except Exception as e:
+        session.rollback()
+        print("Erro ao Registrar:", e)
+
+    finally:
+        session.close()
 
 def opcao_usuario():
     print('''
@@ -54,9 +92,7 @@ def opcao_usuario():
     opcao = input("\nPor favor digite um das opções acima:")
     
     if opcao == "1":
-        lista = bib.listar_livros()
-        print(lista)
-    
+        pass
     elif opcao == "2":
         # CHAMA DEVOLVER LIVRO
         pass
@@ -74,15 +110,15 @@ while True:
     opcao = input("Por favor digite uma das opções acima: ")
 
     if opcao == '1':
-        print(cadastrar_novo_usuario(bib))
+        cadastrar_novo_usuario()
         
 
     elif opcao == '2':
-        print(adicionar_novo_livro(bib))
+        adicionar_novo_livro()
         
         
     elif opcao == '3':
-        opcao_usuario(bib)
+        opcao_usuario()
 
     elif opcao == '4':
         # CHAMA OPÇÕES DA BIBLIOTECA ????????

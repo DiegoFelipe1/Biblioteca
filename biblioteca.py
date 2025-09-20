@@ -38,7 +38,7 @@ class Biblioteca:
     def listar_livros(self):
         print("\n 📚 Lista de livros:")
         for livros in self.livros:
-            print(f'- {livros}')
+            print(f'{livros}')
 
     def listar_usuarios(self):
         print("\n 👤 Lista de usuarios ativos:")
