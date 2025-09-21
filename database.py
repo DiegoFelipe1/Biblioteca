@@ -15,7 +15,7 @@ class Usuario(Base):
     __tablename__ = "Usuarios"
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, nullable=False)
-    contato = Column(Integer, nullable=False)
+    contato = Column(String, nullable=False)
 
     #Relação de Usuario com emprestimo
     emprestimos = relationship("Emprestimo", back_populates="usuario")
@@ -36,7 +36,7 @@ class Emprestimo(Base):
     id = Column(Integer, primary_key=True, index=True)
     usuario_id = Column(Integer, ForeignKey("Usuarios.id"))
     livro_id = Column(Integer, ForeignKey("Livros.id"))
-    data_emprestimo = Column(DateTime, default=datetime.now())
+    data_emprestimo = Column(DateTime, default=datetime.now)
     data_devolucao = Column(DateTime, nullable=True)
 
     #Relação de emprestimos com livros e usuarios
@@ -45,9 +45,3 @@ class Emprestimo(Base):
 
 Base.metadata.create_all(bind=engine)
 
-def get_session():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

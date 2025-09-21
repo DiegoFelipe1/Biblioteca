@@ -1,11 +1,10 @@
 from livro import Livro
 from usuario import Usuario
 from biblioteca import Biblioteca
-from database import get_session, Usuario, Livro
+from database import SessionLocal, Usuario, Livro
 
 bib = Biblioteca()
 
-session = next(get_session())
 
 def msg_inicial():
     print('''
@@ -19,67 +18,55 @@ BEM VINDO A BIBLIOTECA:
 5 - Sair
 ''')
 
-# TODO: implementar a função para listar livros disponíveis
-# TODO: criar tratamento de erro para conexões com o banco
 # TODO: adicionar logs em vez de apenas prints
 
-
 def listar_livros():
-    try:
-        livros = session.query(Livro).all
+    with SessionLocal() as session:
+        livros = session.query(Livro).all()
         if not livros:
-            print("📚 Não existe livros disponiveis.")
-            
+            print("📚 Não existe livros disponiveis.")   
         else:
-            print("📚 Livros disponiveis:")
+            print("\n📚 Livros disponiveis:\n")
             for livro in livros:
                 print(f"{livro.titulo} || {livro.autor} || {livro.ano}")
         
-    finally:
-        session.close()
-
 def cadastrar_novo_usuario():
     name = input("\nPor favor digite o nome do usuario: ")
     email =input("\nPor favor digite o seu email (exemplo: email@email.com): ")
 
-    try:
-        novo_usuario = Usuario(
-            nome=name,
-            contato=email
-        )
-
-        session.add(novo_usuario)
-        session.commit()
-        print(f"✅ Usuario {name} foi criado com sucesso!!")
-    except Exception as e:
-        session.rollback()
-        print("Erro ao Registrar:", e)
-    
-    finally:
-        session.close()
-
+    with SessionLocal() as session:
+        try:
+            novo_usuario = Usuario(
+                nome=name,
+                contato=email
+            )
+            session.add(novo_usuario)
+            session.commit()
+            print(f"✅ Usuario {name} foi criado com sucesso!!")
+        except Exception as e:
+            session.rollback()
+            print("Erro ao Registrar:", e)
+        
 def adicionar_novo_livro():
     titulo = input("\nDigite o titulo: ")
     autor = input("\nDigite o nome do autor: ")
     ano = int(input("\nDigite o ano do livro: "))
 
-    try:
-        novo_livro = Livro(
-            titulo=titulo,
-            ano=ano, 
-            autor=autor
-        )
-        session.add(novo_livro)
-        session.commit()
+    with SessionLocal() as session:
+        try:
+            novo_livro = Livro(
+                titulo=titulo,
+                ano=ano, 
+                autor=autor
+            )
+            session.add(novo_livro)
+            session.commit()
 
-        print(f"✅ O livro {titulo} foi adicionado com sucesso")
+            print(f"✅ O livro {titulo} foi adicionado com sucesso")
 
-    except Exception as e:
-        session.rollback()
-        print("Erro ao Registrar:", e)
-
-    finally:
-        session.close()
+        except Exception as e:
+            session.rollback()
+            print("Erro ao Registrar:", e)
 
 def opcao_usuario():
     print('''
@@ -91,7 +78,7 @@ def opcao_usuario():
     opcao = input("\nPor favor digite um das opções acima:")
     
     if opcao == "1":
-        pass
+        listar_livros()
     elif opcao == "2":
         # CHAMA DEVOLVER LIVRO
         pass
