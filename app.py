@@ -28,7 +28,7 @@ def listar_livros():
         else:
             print("\n📚 Livros disponiveis:\n")
             for livro in livros:
-                print(f"{livro.titulo} || {livro.autor} || {livro.ano}")
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
         
 def cadastrar_novo_usuario():
     name = input("\nPor favor digite o nome do usuario: ")
@@ -75,10 +75,25 @@ def opcao_usuario():
 3 - Mostrar historico de livros
 4 - Voltar
 ''')
-    opcao = input("\nPor favor digite um das opções acima:")
+    opcao = input("\nPor favor digite um das opções acima: ")
     
     if opcao == "1":
         listar_livros()
+        id_livro = input("\nPor favor, digite o numero de qual livro deseja pegar emprestrado: ")
+
+        with SessionLocal() as session:
+            livro = session.query(Livro).filter(Livro.id == int(id_livro)).first()
+
+            if not livro:
+                print("\n❌ Livro não encotrado.")
+            elif not livro.disponivel:
+                print("\n❌ Livro já emprestrado.")
+            else:
+                livro.disponivel = False
+                session.commit()
+                print(f"\n✅ Você pegou emprestado livro: {livro.titulo}")
+            
+
     elif opcao == "2":
         # CHAMA DEVOLVER LIVRO
         pass
