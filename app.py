@@ -1,7 +1,7 @@
 from livro import Livro
 from usuario import Usuario
 from biblioteca import Biblioteca
-from database import SessionLocal, Usuario, Livro
+from database import SessionLocal, Usuario, Livro, Emprestimo
 
 bib = Biblioteca()
 
@@ -42,7 +42,7 @@ def cadastrar_novo_usuario():
             )
             session.add(novo_usuario)
             session.commit()
-            print(f"✅ Usuario {name} foi criado com sucesso!!")
+            print(f"\n✅ Usuario {name} foi criado com sucesso!!")
         except Exception as e:
             session.rollback()
             print("Erro ao Registrar:", e)
@@ -80,18 +80,34 @@ def opcao_usuario():
     if opcao == "1":
         listar_livros()
         id_livro = input("\nPor favor, digite o numero de qual livro deseja pegar emprestrado: ")
+        id_usuario = input("\nPor favor, digite o numero de seu ID: ")
 
         with SessionLocal() as session:
-            livro = session.query(Livro).filter(Livro.id == int(id_livro)).first()
+            try:
+                livro = session.query(Livro).filter(Livro.id == int(id_livro)).first()
+                usuario = session.query(Usuario).filter(Usuario.id == int(id_usuario)).first()
 
-            if not livro:
-                print("\n❌ Livro não encotrado.")
-            elif not livro.disponivel:
-                print("\n❌ Livro já emprestrado.")
-            else:
-                livro.disponivel = False
-                session.commit()
-                print(f"\n✅ Você pegou emprestado livro: {livro.titulo}")
+                if not livro:
+                    print("\n❌ Livro não encotrado.")
+                elif not livro.disponivel:
+                    print("\n❌ Livro já emprestrado.")
+                elif not usuario:
+                    print("\n❌ Usuario não encotrado.")
+                else:
+                    livro.disponivel = False
+
+                    emprestimo = Emprestimo(
+                        usuario_id = id_usuario,
+                        livro_id = id_livro
+                    )
+
+                    session.add(emprestimo)
+                    session.commit()
+                    print(f"\n✅ Você pegou emprestado livro: {livro.titulo}")
+
+            except Exception as e:
+                session.rollback()
+                print(f"\n❌ Erro ao tentar emprestaro livro: {e}")
             
 
     elif opcao == "2":
