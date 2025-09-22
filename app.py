@@ -1,9 +1,5 @@
-from livro import Livro
-from usuario import Usuario
-from biblioteca import Biblioteca
 from database import SessionLocal, Usuario, Livro, Emprestimo
-
-bib = Biblioteca()
+from datetime import datetime
 
 
 def msg_inicial():
@@ -76,7 +72,8 @@ def opcao_usuario():
 4 - Voltar
 ''')
     opcao = input("\nPor favor digite um das opções acima: ")
-    
+
+    # Lista os livros e usuario pega emprestado   
     if opcao == "1":
         listar_livros()
         id_livro = input("\nPor favor, digite o numero de qual livro deseja pegar emprestrado: ")
@@ -109,10 +106,42 @@ def opcao_usuario():
                 session.rollback()
                 print(f"\n❌ Erro ao tentar emprestaro livro: {e}")
             
-
     elif opcao == "2":
-        # CHAMA DEVOLVER LIVRO
-        pass
+        id_usuario = input("\nPor favor, digite o numero de seu ID: ")
+
+        with SessionLocal() as session:
+            try:
+
+                livros_emprestados = session.query(Emprestimo).filter(
+                    Emprestimo.usuario_id == int(id_usuario), 
+                    Emprestimo.data_devolucao.is_(None)).all()
+
+                if not livros_emprestados:
+                    print("❌ Você não possui livros emprestado no momento!")
+
+                for i in livros_emprestados:
+                    print(f"{i.livro_id} - {i.livro.titulo} || {i.livro.autor}")
+
+                id_livro = input("\nPor favor, digite o numero do livro que irá devolver: ")
+
+                livro_devolvido = session.query(Emprestimo).filter(
+                    Emprestimo.usuario_id == int(id_usuario),
+                    Emprestimo.livro_id == int(id_livro),
+                    Emprestimo.data_devolucao.is_(None)).first()
+
+                if not livro_devolvido:
+                    print("❌ Este livro não foi emprestado pra você.")
+
+                else:
+                    livro_devolvido.data_devolucao = datetime.now()
+                    livro_devolvido.livro.disponivel = True
+                    session.commit()
+                    print(f"✅ O livro {livro_devolvido.livro.titulo} foi devolvido com sucesso!!")
+            
+            except Exception as e:
+                session.rollback()
+                print(f"❌ Erro ao devolver livro: {e}")
+            
 
     elif opcao == "3":
         # CHAMA HISTORICO
