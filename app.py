@@ -111,7 +111,6 @@ def opcao_usuario():
 
         with SessionLocal() as session:
             try:
-
                 livros_emprestados = session.query(Emprestimo).filter(
                     Emprestimo.usuario_id == int(id_usuario), 
                     Emprestimo.data_devolucao.is_(None)).all()
@@ -141,11 +140,23 @@ def opcao_usuario():
             except Exception as e:
                 session.rollback()
                 print(f"❌ Erro ao devolver livro: {e}")
-            
 
-    elif opcao == "3":
-        # CHAMA HISTORICO
-        pass
+    elif opcao == "3":        
+        id_usuario = input("\nPor favor, digite o numero de seu ID: ")
+
+        with SessionLocal() as session:
+            try:
+                livros_emprestados = session.query(Emprestimo).filter(Emprestimo.usuario_id == int(id_usuario)).all()
+
+                if not livros_emprestados:
+                    print("❌ Você você não pegou livros emprestado.")
+
+                for i in livros_emprestados:
+                    status = "Não devolvido" if not i.data_devolucao else f"Devolvido em {i.data_devolucao}"
+                    print(f"- {i.livro.titulo} | Data do emprestimo {i.data_emprestimo} | {status}" )
+
+            except Exception as e:
+                print(f"Falha em listar livros empretado: {e}")
 
     else: 
         msg_inicial()
