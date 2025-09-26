@@ -1,18 +1,39 @@
 from database import SessionLocal, Usuario, Livro, Emprestimo
 from datetime import datetime
+import bcrypt
+import uuid
+
+usuario_logado = None
+
+'''
+Usuario Seth:
+    email: email@gmail.com
+    senha: 123mudar
+    role: user
+
+Usuario Diego:
+    email: diego@exemplo.com
+    senha: mudar123    
+'''
+
 
 
 def msg_inicial():
-    print('''
+    if usuario_logado is None:
+        print('''
 ====================================================================
 BEM VINDO A BIBLIOTECA:
-
-1 - Cadastrar usuario
-2 - Adicionar livro
-3 - Opções do usuario
-4 - Opções da biblioteca
-5 - Sair
+              
+1 - Login
+2 - Criar uma conta
+3 - Sair
 ''')
+    else:
+        print(f"\n Usuario: {usuario_logado['nome']}")
+        if usuario_logado["role"] == "admin":
+            print("1 - Cadastrar livros\n2 - Listar usuários\n3 - Logout")
+        else:
+            opcao_usuario()
 
 # TODO: adicionar logs em vez de apenas prints
 
@@ -20,21 +41,26 @@ def listar_livros():
     with SessionLocal() as session:
         livros = session.query(Livro).all()
         if not livros:
-            print("📚 Não existe livros disponiveis.")   
+            return False
         else:
             print("\n📚 Livros disponiveis:\n")
             for livro in livros:
                 print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
         
 def cadastrar_novo_usuario():
-    name = input("\nPor favor digite o nome do usuario: ")
-    email =input("\nPor favor digite o seu email (exemplo: email@email.com): ")
+    name = input("\nPor favor, digite o nome do usuario: ")
+    email =input("\nPor favor, digite o seu email (exemplo: email@email.com): ")
+    senha = input("\nPor favor, digite uma senha: ")
+    role = input("Digite o cargo: ")
 
     with SessionLocal() as session:
         try:
+            hashed = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt())
             novo_usuario = Usuario(
                 nome=name,
-                contato=email
+                email=email,
+                senha=hashed.decode("utf-8"),
+                role = role
             )
             session.add(novo_usuario)
             session.commit()
@@ -42,7 +68,36 @@ def cadastrar_novo_usuario():
         except Exception as e:
             session.rollback()
             print("Erro ao Registrar:", e)
-        
+
+def login(email, password):
+    global usuario_logado # Torna a variavel global
+
+    with SessionLocal() as session:
+        # Filtra no banco de dados por email
+        usuario = session.query(Usuario).filter_by(email=email).first()
+        # Faz a verificação se a senha que foi criptografada bate com o DB
+        if usuario and bcrypt.checkpw(password.encode("utf-8"),
+                                      usuario.senha.encode("utf-8")):
+            token = str(uuid.uuid4())
+            usuario_logado = {
+                "id": usuario.id,
+                "nome": usuario.nome,
+                "role": usuario.role,
+                "token": token
+            }
+            print(f"""4
+🔓 Login realizado com sucesso!!
+Seja bem vindo {usuario.nome}""")
+            return True
+        else:
+            print("❌ Email ou senha incorretos.")
+            return False
+
+def logout():
+    global usuario_logado
+    usuario_logado = None
+    print("\n Logout realizado com sucesso.")
+
 def adicionar_novo_livro():
     titulo = input("\nDigite o titulo: ")
     autor = input("\nDigite o nome do autor: ")
@@ -69,13 +124,18 @@ def opcao_usuario():
 1 - Pegar livros
 2 - Devolver livros
 3 - Mostrar historico de livros
-4 - Voltar
+4 - Logout
 ''')
     opcao = input("\nPor favor digite um das opções acima: ")
 
     # Lista os livros e usuario pega emprestado   
     if opcao == "1":
         listar_livros()
+
+        if not listar_livros():
+            print("📚 Não existe livros disponiveis.")
+            return msg_inicial()
+    
         id_livro = input("\nPor favor, digite o numero de qual livro deseja pegar emprestrado: ")
         id_usuario = input("\nPor favor, digite o numero de seu ID: ")
 
@@ -117,6 +177,7 @@ def opcao_usuario():
 
                 if not livros_emprestados:
                     print("❌ Você não possui livros emprestado no momento!")
+                    return msg_inicial()
 
                 for i in livros_emprestados:
                     print(f"{i.livro_id} - {i.livro.titulo} || {i.livro.autor}")
@@ -150,6 +211,7 @@ def opcao_usuario():
 
                 if not livros_emprestados:
                     print("❌ Você você não pegou livros emprestado.")
+                    return msg_inicial()
 
                 for i in livros_emprestados:
                     status = "Não devolvido" if not i.data_devolucao else f"Devolvido em {i.data_devolucao}"
@@ -158,8 +220,13 @@ def opcao_usuario():
             except Exception as e:
                 print(f"Falha em listar livros empretado: {e}")
 
-    else: 
+    elif opcao == "4":
+        logout()
         msg_inicial()
+
+    else: 
+        print("Atenção! Você digitou uma opção invalida.")
+        return msg_inicial()
     
 while True:
 
@@ -167,23 +234,19 @@ while True:
     opcao = input("Por favor digite uma das opções acima: ")
 
     if opcao == '1':
-        cadastrar_novo_usuario()
-        
+        email = input("\nEmail: ")
+        senha = input("\nSenha: ")
+        login(email, senha)
 
     elif opcao == '2':
-        adicionar_novo_livro()
-        
-        
+        cadastrar_novo_usuario()
+
     elif opcao == '3':
-        opcao_usuario()
-
-    elif opcao == '4':
-        # CHAMA OPÇÕES DA BIBLIOTECA ????????
-        pass
-
-    else:
         # ENCERRA O LOOP
         break
+
+    else:
+        print("Atenção! Você digitou uma opção invalida.")
 
 if __name__ == "__main__":
     pass
