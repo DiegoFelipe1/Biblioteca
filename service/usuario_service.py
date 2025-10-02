@@ -59,3 +59,8 @@ def cadastrar_usuario(name: str, email: str, senha: str, role: str) -> bool:
             session.rollback()
             print("Erro ao Registrar:", e)
             return False
+
+def logout():
+    global usuario_logado
+    usuario_logado = None
+    print("\n Logout realizado com sucesso.")

@@ -1,8 +1,9 @@
 from database import SessionLocal
 from datetime import datetime
-from service.emprestimo_service import emprestar_livro
-from service.usuario_service import login, usuario_logado, cadastrar_usuario
-from service.livro_service import listar_livros
+from service.emprestimo_service import emprestar_livro, devolver_livro
+from service.usuario_service import login, usuario_logado, cadastrar_usuario, logout
+from service.livro_service import listar_livros, historico_livros
+
 
 '''
 Usuario Seth:
@@ -16,7 +17,6 @@ Usuario Diego:
 '''
 
 def msg_inicial():
-    if usuario_logado is None:
         print('''
 ====================================================================
 BEM VINDO A BIBLIOTECA:
@@ -25,17 +25,9 @@ BEM VINDO A BIBLIOTECA:
 2 - Criar uma conta
 3 - Sair
 ''')
-    else:
-        print(f"\n Usuario: {usuario_logado['nome']}")
-        if usuario_logado["role"] == "admin":
-            print("1 - Cadastrar livros\n2 - Listar usuários\n3 - Logout")
-        else:
-            menu_usuario()
 
-def logout():
-    global usuario_logado
-    usuario_logado = None
-    print("\n Logout realizado com sucesso.")
+def menu_admin():
+    pass
 
 def menu_usuario():
     print('''
@@ -48,9 +40,9 @@ def menu_usuario():
 
     # Lista os livros e usuario pega emprestado   
     if opcao == "1":
-        listar_livros()
+        existem_livros = listar_livros()
 
-        if not listar_livros():
+        if not existem_livros:
             print("📚 Não existe livros disponiveis.")
             return msg_inicial()
     
@@ -61,61 +53,17 @@ def menu_usuario():
         
     elif opcao == "2":
         id_usuario = input("\nPor favor, digite o numero de seu ID: ")
-
-        with SessionLocal() as session:
-            try:
-                livros_emprestados = session.query(Emprestimo).filter(
-                    Emprestimo.usuario_id == int(id_usuario), 
-                    Emprestimo.data_devolucao.is_(None)).all()
-
-                if not livros_emprestados:
-                    print("❌ Você não possui livros emprestado no momento!")
-                    return msg_inicial()
-
-                for i in livros_emprestados:
-                    print(f"{i.livro_id} - {i.livro.titulo} || {i.livro.autor}")
-
-                id_livro = input("\nPor favor, digite o numero do livro que irá devolver: ")
-
-                livro_devolvido = session.query(Emprestimo).filter(
-                    Emprestimo.usuario_id == int(id_usuario),
-                    Emprestimo.livro_id == int(id_livro),
-                    Emprestimo.data_devolucao.is_(None)).first()
-
-                if not livro_devolvido:
-                    print("❌ Este livro não foi emprestado pra você.")
-
-                else:
-                    livro_devolvido.data_devolucao = datetime.now()
-                    livro_devolvido.livro.disponivel = True
-                    session.commit()
-                    print(f"✅ O livro {livro_devolvido.livro.titulo} foi devolvido com sucesso!!")
-            
-            except Exception as e:
-                session.rollback()
-                print(f"❌ Erro ao devolver livro: {e}")
+        sucesso = devolver_livro(id_usuario)
+        if not sucesso:
+            print("Voltando ao menu...")
 
     elif opcao == "3":        
         id_usuario = input("\nPor favor, digite o numero de seu ID: ")
-
-        with SessionLocal() as session:
-            try:
-                livros_emprestados = session.query(Emprestimo).filter(Emprestimo.usuario_id == int(id_usuario)).all()
-
-                if not livros_emprestados:
-                    print("❌ Você você não pegou livros emprestado.")
-                    return msg_inicial()
-
-                for i in livros_emprestados:
-                    status = "Não devolvido" if not i.data_devolucao else f"Devolvido em {i.data_devolucao}"
-                    print(f"- {i.livro.titulo} | Data do emprestimo {i.data_emprestimo} | {status}" )
-
-            except Exception as e:
-                print(f"Falha em listar livros empretado: {e}")
+        historico_livros(id_usuario)
 
     elif opcao == "4":
         logout()
-        msg_inicial()
+        return True
 
     else: 
         print("Atenção! Você digitou uma opção invalida.")
@@ -129,7 +77,13 @@ while True:
     if opcao == '1':
         email = input("\nEmail: ")
         senha = input("\nSenha: ")
-        login(email, senha)
+        
+        usuario_logado = login(email, senha)
+        if usuario_logado is not None:
+            if usuario_logado["role"] == "admin":
+                menu_admin()
+            else:
+                menu_usuario()
 
     elif opcao == '2':
         name = input("\nPor favor, digite o nome do usuario: ")
