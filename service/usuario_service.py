@@ -32,6 +32,25 @@ Seja bem vindo {usuario.nome}""")
             print("❌ Email ou senha incorretos.")
             return False
 
+def logout():
+    global usuario_logado
+    usuario_logado = None
+    print("\n Logout realizado com sucesso.")
+
+def listar_usuarios() -> list:
+    with SessionLocal() as session:
+        try:
+            usuarios = session.query(Usuario).all()
+
+            if not usuarios:
+                return []
+            
+            return usuarios
+        
+        except Exception as e:
+            print(f"Erro ao listar usuarios: {e}")
+            return []
+
 def cadastrar_usuario(name: str, email: str, senha: str, role: str) -> bool:
     with SessionLocal() as session:
         try:
@@ -59,8 +78,3 @@ def cadastrar_usuario(name: str, email: str, senha: str, role: str) -> bool:
             session.rollback()
             print("Erro ao Registrar:", e)
             return False
-
-def logout():
-    global usuario_logado
-    usuario_logado = None
-    print("\n Logout realizado com sucesso.")
