@@ -64,7 +64,7 @@ def devolver_livro(id_usuario: str, id_livro: str) -> bool:
                 print(f"❌ Erro ao devolver livro: {e}")
                 return False
 
-def listar_emprestimos(id_usuario: int = None) -> list:
+def listar_emprestimos(id_usuario: int = None) -> list[dict]:
      with SessionLocal() as session:
         try:
             # Cria a query base com eager loading de livro e usuário
@@ -82,8 +82,18 @@ def listar_emprestimos(id_usuario: int = None) -> list:
             if not emprestimos:
                  return []
             
-            return emprestimos
-
+            return [
+                {
+                    "id": e.id,
+                    "titulo": e.livro.titulo,
+                    "autor": e.livro.autor,
+                    "ano": e.livro.ano,
+                    "data_emprestimo": e.data_emprestimo,
+                    "data_devolucao": e.data_devolucao
+                }
+                for e in emprestimos
+            ]
+        
         except Exception as e:
                session.rollback()
                print(f"Erro ao listar emprestimos: {e}")

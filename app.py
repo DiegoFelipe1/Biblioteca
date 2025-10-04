@@ -4,8 +4,6 @@ from service.emprestimo_service import listar_emprestimos, emprestar_livro, devo
 from service.usuario_service import excluir_usuario, listar_usuarios, login, usuario_logado, cadastrar_usuario, logout
 from service.livro_service import excluir_livro, editar_livro, adicionar_livro, listar_livros, historico_livros
 
-# TODO: ajustar pegar livros (não esta colocando livro indisponivel no DB)
-# TODO: erro ao mostrar historico de livros do usuario
 
 '''
 Usuario Seth:
@@ -34,6 +32,7 @@ def menu_admin():
 ===============================
 📚 Menu do Administrador
 ===============================
+          
 1 - Cadastrar livros
 2 - Listar todos os livros
 3 - Editar livro
@@ -65,7 +64,8 @@ def menu_admin():
         else:
             print("\n📚 Livros disponiveis:\n")
             for livro in livros:
-                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
+                devolucao = livro.data_devolucao if livro.data_devolucao else "Não devolvido"
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano} || {devolucao}")
 
         return menu_admin()
     
@@ -173,7 +173,6 @@ def menu_admin():
     # Logout
     elif opcao == "0":
         logout()
-        return msg_inicial()
     
     # Mensagem caso não selecionar nenhuma das anteriores
     else:
@@ -182,6 +181,10 @@ def menu_admin():
 
 def menu_usuario():
     print('''
+===============================
+📚 Menu do Usuario
+===============================
+          
 1 - Pegar livros
 2 - Devolver livros
 3 - Mostrar historico de livros
@@ -199,7 +202,8 @@ def menu_usuario():
         else:
             print("\n📚 Livros disponiveis:\n")
             for livro in existem_livros:
-                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
+                devolucao = "Disponivel" if livro.disponivel else "Indisponivel"
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano} || {devolucao}")
     
         id_livro = input("\nPor favor, digite o numero de qual livro deseja pegar emprestrado: ")
         id_usuario = usuario_logado["id"]
@@ -220,9 +224,9 @@ def menu_usuario():
 
         print("\n📚 Seus emprestimos:\n")
         for emprestimo in emprestimos:
-            devolucao = emprestimo.data_devolucao if emprestimo.data_devolucao else "Não devolvido"
+            devolucao = "Devolvido" if emprestimo["data_devolucao"] else "Não devolvido"
 
-            print(f"{emprestimo.livro.id}. {emprestimo.livro.titulo} || {emprestimo.livro.autor} || {emprestimo.livro.ano} {devolucao}")
+            print(f"{emprestimo["id"]}. {emprestimo["titulo"]} || {emprestimo["autor"]} || {emprestimo["ano"]} || {devolucao}")
         
         # Faz a validação qual livro ele quer devolver
         id_livro = input("\nPor favor, digite o numero do livro que deseja devolver: ")
@@ -238,22 +242,21 @@ def menu_usuario():
     # Mostrar historico de livros
     elif opcao == "3":        
         id_usuario = usuario_logado["id"]
-        historico = historico_livros(id_usuario)
+        historico = listar_emprestimos(id_usuario)
 
         if not historico:
-            print("❌ Você você não pegou livros emprestado.")
-            
+            print("\n❌ Você não pegou livros emprestado.")
+            return menu_usuario()
+        
         for i in historico:
-            status = "Não devolvido" if not i.data_devolucao else f"Devolvido em {i.data_devolucao}"
-            
-            print(f"- {i.livro.titulo} | Data do emprestimo {i.data_emprestimo} | {status}" )
+            status = "Não devolvido" if not i["data_devolucao"] else f"Devolvido em {i['data_devolucao']}"
+            print(f"- {i['titulo']} | Data do empréstimo: {i['data_emprestimo']} | {status}")
 
         return menu_usuario()
 
     # Logout
     elif opcao == "4":
         logout()
-        return msg_inicial()
 
     # Mensagem caso não selecionar nenhuma das anteriores
     else: 
@@ -261,7 +264,6 @@ def menu_usuario():
         return menu_usuario()
     
 while True:
-
     msg_inicial()
     opcao = input("Por favor digite uma das opções acima: ")
 

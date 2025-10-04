@@ -41,7 +41,7 @@ def adicionar_livro(titulo: str, autor: str, ano: int) -> bool:
             print("Erro ao Registrar:", e)
             return False
 
-def historico_livros(id_usuario: str) -> bool:
+def historico_livros(id_usuario: str) -> list:
     with SessionLocal() as session:
             try:
                 livros_emprestados = session.query(Emprestimo).filter(Emprestimo.usuario_id == int(id_usuario)).all()
@@ -49,6 +49,7 @@ def historico_livros(id_usuario: str) -> bool:
                 if not livros_emprestados:
                     return False
 
+                return livros_emprestados
             except Exception as e:
                 session.rollback()
                 print(f"Falha em listar livros empretado: {e}")
