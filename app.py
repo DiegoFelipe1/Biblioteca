@@ -1,8 +1,8 @@
 from database import SessionLocal
 from datetime import datetime
 from service.emprestimo_service import emprestar_livro, devolver_livro
-from service.usuario_service import login, usuario_logado, cadastrar_usuario, logout
-from service.livro_service import listar_livros, historico_livros
+from service.usuario_service import listar_usuarios, login, usuario_logado, cadastrar_usuario, logout
+from service.livro_service import excluir_livro, editar_livro, adicionar_livro, listar_livros, historico_livros
 
 
 '''
@@ -27,8 +27,98 @@ BEM VINDO A BIBLIOTECA:
 ''')
 
 def menu_admin():
-    pass
+    print('''
+===============================
+📚 Menu do Administrador
+===============================
+1 - Cadastrar livros
+2 - Listar todos os livros
+3 - Editar livro
+4 - Remover livro
+5 - Listar usuários
+6 - Remover usuário
+7 - Visualizar empréstimos
+8 - Forçar devolução
+9 - Cadastrar novo administrador
+0 - Logout
+''')
+    opcao = input("\nPor favor digite um das opções acima: ")
 
+    if opcao == "1":
+        titulo = input("\nDigite o titulo: ")
+        autor = input("\nDigite o nome do autor: ")
+        ano = int(input("\nDigite o ano do livro: "))
+
+        adicionar_livro(titulo, autor, ano)
+
+        return menu_admin()
+    
+    elif opcao == "2":
+        livros = listar_livros()
+
+        if not livros:
+            print("Não existe livros cadastrados.")
+        else:
+            print("\n📚 Livros disponiveis:\n")
+            for livro in livros:
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
+
+        return menu_admin()
+    
+    elif opcao == "3":
+        livros = listar_livros()
+
+        if not livros:
+            print("Não existe livros cadastrados.")
+        else:
+            print("\n📚 Livros disponiveis:\n")
+            for livro in livros:
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
+
+        id = int(input("\nQual o id do livro que deseja editar? "))
+
+        titulo = input("\nQual o novo titulo? ")
+        autor = input("\nQual o novo nome do autor? ")
+        ano = int(input("\nQual o novo ano? "))
+
+        sucesso = editar_livro(id, titulo, autor, ano)
+
+        if sucesso:
+            print(f"✅ {titulo} foi editado com sucesso.")
+
+        return menu_admin()
+    
+    elif opcao == "4":
+        livros = listar_livros()
+
+        if not livros:
+            print("Não existe livros cadastrados.")
+        else:
+            print("\n📚 Livros disponiveis:\n")
+            for livro in livros:
+                print(f"{livro.id}. {livro.titulo} || {livro.autor} || {livro.ano}")
+
+        id = int(input("\nQual o id do livro que deseja remover? "))
+
+        sucesso = excluir_livro(id)
+
+        if sucesso:
+            print("✅ Livro excluido com sucesso>")
+        
+        return menu_admin()
+    
+    elif opcao == "5":
+        usuarios = listar_usuarios()
+
+        if not usuarios:
+            print("❌ Não existe usuarios no banco de dados.")
+
+        else:
+            for i in usuarios:
+                print(f"{i.id} || {i.nome} || {i.email} || {i.role}")
+
+        return menu_admin()
+    
 def menu_usuario():
     print('''
 1 - Pegar livros
