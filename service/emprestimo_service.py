@@ -1,6 +1,7 @@
 from models.livro import Livro
 from models.usuario import Usuario
 from models.emprestimo import Emprestimo
+from sqlalchemy.orm import joinedload
 from database import SessionLocal
 from datetime import datetime
 
@@ -41,39 +42,50 @@ def emprestar_livro(id_livro: str, id_usuario: str) -> bool:
                 print(f"\n❌ Erro ao tentar emprestaro livro: {e}")
                 return False
 
-def devolver_livro(id_usuario: str) -> bool:
+def devolver_livro(id_usuario: str, id_livro: str) -> bool:
        with SessionLocal() as session:
             try:
-                livros_emprestados = session.query(Emprestimo).filter(
-                    Emprestimo.usuario_id == int(id_usuario), 
-                    Emprestimo.data_devolucao.is_(None)).all()
-
-                if not livros_emprestados:
-                    print("❌ Você não possui livros emprestado no momento!")
-                    return False
-
-                for i in livros_emprestados:
-                    print(f"{i.livro_id} - {i.livro.titulo} || {i.livro.autor}")
-
-                id_livro = input("\nPor favor, digite o numero do livro que irá devolver: ")
-
                 livro_devolvido = session.query(Emprestimo).filter(
                     Emprestimo.usuario_id == int(id_usuario),
                     Emprestimo.livro_id == int(id_livro),
                     Emprestimo.data_devolucao.is_(None)).first()
 
                 if not livro_devolvido:
-                    print("❌ Este livro não foi emprestado pra você.")
                     return False
 
                 else:
                     livro_devolvido.data_devolucao = datetime.now()
                     livro_devolvido.livro.disponivel = True
                     session.commit()
-                    print(f"✅ O livro {livro_devolvido.livro.titulo} foi devolvido com sucesso!!")
                     return True
                 
             except Exception as e:
                 session.rollback()
                 print(f"❌ Erro ao devolver livro: {e}")
                 return False
+
+def listar_emprestimos(id_usuario: int = None) -> list:
+     with SessionLocal() as session:
+        try:
+            # Cria a query base com eager loading de livro e usuário
+            query = session.query(Emprestimo).options(
+                joinedload(Emprestimo.livro),
+                joinedload(Emprestimo.usuario)
+            )
+
+            # Se id_usuario for passado, filtra
+            if id_usuario:
+                query = query.filter(Emprestimo.usuario_id == id_usuario)
+
+            emprestimos = query.all()
+
+            if not emprestimos:
+                 return []
+            
+            return emprestimos
+
+        except Exception as e:
+               session.rollback()
+               print(f"Erro ao listar emprestimos: {e}")
+               return []
+        

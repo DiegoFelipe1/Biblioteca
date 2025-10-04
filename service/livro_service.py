@@ -47,13 +47,7 @@ def historico_livros(id_usuario: str) -> bool:
                 livros_emprestados = session.query(Emprestimo).filter(Emprestimo.usuario_id == int(id_usuario)).all()
 
                 if not livros_emprestados:
-                    print("❌ Você você não pegou livros emprestado.")
                     return False
-
-                for i in livros_emprestados:
-                    status = "Não devolvido" if not i.data_devolucao else f"Devolvido em {i.data_devolucao}"
-                    print(f"- {i.livro.titulo} | Data do emprestimo {i.data_emprestimo} | {status}" )
-                    return True
 
             except Exception as e:
                 session.rollback()

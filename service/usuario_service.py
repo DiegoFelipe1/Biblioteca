@@ -58,10 +58,6 @@ def cadastrar_usuario(name: str, email: str, senha: str, role: str) -> bool:
                 print("❌ Já existe usuario com esse email.")
                 return False
             
-            if role not in ["admin", "usuario"]:
-                print("❌ Role inválida. Use 'admin' ou 'usuario'.")
-                return False
-            
             hashed = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt())
             novo_usuario = Usuario(
                 nome=name,
@@ -77,4 +73,21 @@ def cadastrar_usuario(name: str, email: str, senha: str, role: str) -> bool:
         except Exception as e:
             session.rollback()
             print("Erro ao Registrar:", e)
+            return False
+
+def excluir_usuario(usuario_id: int) -> bool:
+    with SessionLocal() as session:
+        try:
+            usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
+
+            if not usuario:
+                print("Usuario não foi encontrado.")
+
+            session.delete(usuario)
+            session.commit()
+            return True
+
+        except Exception as e:
+            session.rollback()
+            print(f"Erro ao deletar usuario: {e}")
             return False
