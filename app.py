@@ -1,8 +1,7 @@
-from database import SessionLocal
-from datetime import datetime
+
 from service.emprestimo_service import listar_emprestimos, emprestar_livro, devolver_livro
 from service.usuario_service import excluir_usuario, listar_usuarios, login, usuario_logado, cadastrar_usuario, logout
-from service.livro_service import excluir_livro, editar_livro, adicionar_livro, listar_livros, historico_livros
+from service.livro_service import excluir_livro, editar_livro, adicionar_livro, listar_livros
 
 
 '''
